@@ -2,10 +2,13 @@ package app.azracelik.harman.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Harman Özel Doğal & Huzurlu Renk Paleti
+val SageDark = Color(0xFF778873)     // Koyu Adaçayı Yeşili (Ana Marka / Primary)
+val SageLight = Color(0xFFA1BC98)    // Yumuşak Adaçayı (İkincil / Secondary & Vurgular)
+val WarmSand = Color(0xFFDCCFC0)     // Sıcak Kum / Bej (Kart Yüzeyleri / Tertiary)
+val WarmCream = Color(0xFFFDF6ED)    // Krem / Beyazımsı (Arka Plan / Background)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Yardımcı Metin ve Kontrast Renkleri
+val TextDark = Color(0xFF2C332B)
+val TextMuted = Color(0xFF636A60)
+val SageContainer = Color(0xFFE4EFE1)

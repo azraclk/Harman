@@ -22,6 +22,12 @@ class TransactionViewModel(private val dao: TransactionDao) : ViewModel() {
             dao.deleteTransaction(transaction)
         }
     }
+
+    fun clearAllTransactions() {
+        viewModelScope.launch {
+            dao.deleteAllTransactions()
+        }
+    }
 }
 
 // ViewModel Üreticisi (Factory)
