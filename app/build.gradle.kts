@@ -39,7 +39,7 @@ android {
 }
 
 dependencies {
-    val room_version = "2.6.1"
+    val room_version = "2.7.0-alpha13"
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

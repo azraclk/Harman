@@ -3,45 +3,46 @@ package app.azracelik.harman
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import app.azracelik.harman.data.HarmanDatabase
+import app.azracelik.harman.ui.screens.DashboardScreen
 import app.azracelik.harman.ui.theme.HarmanTheme
+import app.azracelik.harman.viewmodel.TransactionViewModel
+import app.azracelik.harman.viewmodel.TransactionViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        // 1. Veritabanı ve DAO'yu başlat
+        val database = HarmanDatabase.getDatabase(applicationContext)
+        val transactionDao = database.transactionDao()
+
+        // 2. Factory kullanarak ViewModel'ı oluştur
+        val factory = TransactionViewModelFactory(transactionDao)
+        val viewModel = ViewModelProvider(this, factory)[TransactionViewModel::class.java]
+
         setContent {
+            // Uygulamanın temasını başlatır (HarmanTheme adı ui.theme içindeki Theme.kt'den gelir)
             HarmanTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // 3. Ana ekranımızı çağır ve ViewModel'ı içine gönder
+                    DashboardScreen(
+                        viewModel = viewModel,
+                        onAddClick = {
+                            // Şimdilik burası boş kalacak.
+                            // İleride "Yeni Ekle" ekranına geçiş (Navigation) kodlarını buraya yazacağız.
+                        }
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HarmanTheme {
-        Greeting("Android")
     }
 }
