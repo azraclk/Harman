@@ -1,3 +1,82 @@
 <resources>
     <string name="app_name">Harman</string>
+
+    <!-- Kategoriler -->
+    <string name="cat_market">Market</string>
+    <string name="cat_bills">Faturalar</string>
+    <string name="cat_transport">Ulaşım</string>
+    <string name="cat_shopping">Alışveriş</string>
+    <string name="cat_fun">Eğlence</string>
+    <string name="cat_health">Sağlık</string>
+    <string name="cat_education">Eğitim</string>
+    <string name="cat_other">Diğer</string>
+    <string name="cat_salary">Maaş</string>
+    <string name="cat_extra_income">Ek gelir</string>
+
+    <!-- Genel -->
+    <string name="income">Gelir</string>
+    <string name="expense">Gider</string>
+    <string name="save">Kaydet</string>
+    <string name="cancel">Vazgeç</string>
+    <string name="delete">Sil</string>
+    <string name="edit">Düzenle</string>
+    <string name="back">Geri</string>
+    <string name="add_transaction">İşlem ekle</string>
+
+    <!-- Onboarding -->
+    <string name="onb_title">Paran, kontrolün altında</string>
+    <string name="onb_subtitle">Bu ay ne kadar harcamak istiyorsun? Gerisini Harman halleder.</string>
+    <string name="onb_limit_label">Aylık harcama limiti</string>
+    <string name="onb_start">Başlayalım</string>
+    <string name="onb_skip">Şimdilik atla</string>
+
+    <!-- Ana sayfa -->
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_report">Rapor</string>
+    <string name="nav_goals">Hedefler</string>
+    <string name="ring_left">kaldı</string>
+    <string name="ring_over">limit aşıldı</string>
+    <string name="ring_spent_of">%1$s / %2$s harcandı</string>
+    <string name="ring_no_limit_title">Bu ay harcanan</string>
+    <string name="ring_set_limit">Limit belirle</string>
+    <string name="home_recent">Bu ayın işlemleri</string>
+    <string name="home_empty_title">Henüz işlem yok</string>
+    <string name="home_empty_body">İlk harcamanı ekleyerek başla.</string>
+    <string name="home_empty_cta">İlk harcamanı ekle</string>
+    <string name="goal_card_title">Tasarruf hedefi</string>
+    <string name="goal_card_empty">Bir hedef belirle, birikimini takip et</string>
+
+    <!-- Ekle / düzenle -->
+    <string name="tx_new">Yeni işlem</string>
+    <string name="tx_edit">İşlemi düzenle</string>
+    <string name="tx_amount">Tutar</string>
+    <string name="tx_category">Kategori</string>
+    <string name="tx_date">Tarih</string>
+    <string name="tx_note">Not (isteğe bağlı)</string>
+    <string name="tx_today">Bugün</string>
+    <string name="tx_amount_error">Geçerli bir tutar gir</string>
+    <string name="tx_delete_title">İşlem silinsin mi?</string>
+    <string name="tx_delete_body">Bu işlem kalıcı olarak silinecek.</string>
+    <string name="ok">Tamam</string>
+
+    <!-- Rapor -->
+    <string name="report_prev_month">Önceki ay</string>
+    <string name="report_next_month">Sonraki ay</string>
+    <string name="report_balance">Net durum</string>
+    <string name="report_categories">Harcama dağılımı</string>
+    <string name="report_empty">Bu ay için harcama yok</string>
+
+    <!-- Hedefler -->
+    <string name="goals_title">Hedeflerin</string>
+    <string name="goals_limit_title">Aylık harcama limiti</string>
+    <string name="goals_limit_hint">Boş bırakırsan limit uygulanmaz.</string>
+    <string name="goals_savings_title">Tasarruf hedefi</string>
+    <string name="goals_goal_name">Hedef adı (ör. Tatil)</string>
+    <string name="goals_goal_target">Hedef tutar</string>
+    <string name="goals_goal_saved">%1$s / %2$s biriktirildi</string>
+    <string name="goals_add_saving">Birikim ekle</string>
+    <string name="goals_remove_saving">Birikimden çıkar</string>
+    <string name="goals_delete_goal">Hedefi sil</string>
+    <string name="goals_amount">Tutar</string>
+    <string name="goals_reached">Hedefe ulaştın 🎉</string>
 </resources>
