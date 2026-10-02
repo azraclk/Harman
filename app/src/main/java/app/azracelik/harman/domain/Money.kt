@@ -45,7 +45,9 @@ fun minorToInput(minor: Long): String {
 private const val MAX_MINOR = 99_999_999_999L
 
 private val monthFormatter = DateTimeFormatter.ofPattern("LLLL yyyy", TrLocale)
+private val shortFormatter = DateTimeFormatter.ofPattern("d MMM", TrLocale)
 private val dayFormatter = DateTimeFormatter.ofPattern("d MMMM, EEEE", TrLocale)
 
 fun YearMonth.label(): String = format(monthFormatter).replaceFirstChar { it.titlecase(TrLocale) }
 fun LocalDate.dayLabel(): String = format(dayFormatter)
+fun LocalDate.shortLabel(): String = format(shortFormatter)

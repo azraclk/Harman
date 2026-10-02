@@ -49,6 +49,8 @@ import app.azracelik.harman.data.model.Transaction
 import app.azracelik.harman.data.model.TransactionType
 import app.azracelik.harman.domain.BudgetLevel
 import app.azracelik.harman.domain.formatMoney
+import app.azracelik.harman.domain.shortLabel
+import java.time.LocalDate
 import app.azracelik.harman.ui.theme.semantic
 
 fun Category.icon(): ImageVector = when (this) {
@@ -82,7 +84,7 @@ fun BudgetRing(
     content: @Composable () -> Unit
 ) {
     val animated by animateFloatAsState(fraction, tween(900), label = "ring")
-    val track = MaterialTheme.colorScheme.surfaceVariant
+    val track = MaterialTheme.colorScheme.outlineVariant
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(size)) {
             val stroke = strokeWidth.toPx()
@@ -163,9 +165,11 @@ fun TransactionRow(transaction: Transaction, onClick: () -> Unit, modifier: Modi
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            if (transaction.note.isNotBlank()) {
+            val subtitle = LocalDate.ofEpochDay(transaction.epochDay).shortLabel() +
+                if (transaction.note.isNotBlank()) " · " + transaction.note else ""
+            run {
                 Text(
-                    transaction.note,
+                    subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

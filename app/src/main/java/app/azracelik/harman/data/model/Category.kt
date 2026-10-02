@@ -6,7 +6,7 @@ import app.azracelik.harman.R
 enum class TransactionType { INCOME, EXPENSE }
 
 /** Sabit kategori listesi: basit tutmak için kullanıcı tanımlı kategori yok. */
-enum class Category(@StringRes val labelRes: Int, val type: TransactionType) {
+enum class Category(@param:StringRes val labelRes: Int, val type: TransactionType) {
     MARKET(R.string.cat_market, TransactionType.EXPENSE),
     BILLS(R.string.cat_bills, TransactionType.EXPENSE),
     TRANSPORT(R.string.cat_transport, TransactionType.EXPENSE),
