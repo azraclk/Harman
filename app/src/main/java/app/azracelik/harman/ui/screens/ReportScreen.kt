@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,11 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.azracelik.harman.data.DateFilterHelper
+import app.azracelik.harman.data.DateFilterPeriod
 import app.azracelik.harman.data.Transaction
+import app.azracelik.harman.ui.theme.ExpenseContainer
+import app.azracelik.harman.ui.theme.ExpenseTerracotta
+import app.azracelik.harman.ui.theme.IncomeContainer
+import app.azracelik.harman.ui.theme.IncomeGreen
 import app.azracelik.harman.ui.theme.getCategoryIcon
 import app.azracelik.harman.viewmodel.TransactionViewModel
 import java.util.Locale
@@ -29,19 +35,39 @@ import java.util.Locale
 fun ReportScreen(
     viewModel: TransactionViewModel
 ) {
-    val transactions by viewModel.allTransactions.collectAsState(initial = emptyList())
+    val allTransactions by viewModel.allTransactions.collectAsState(initial = emptyList())
+    var selectedPeriod by remember { mutableStateOf(DateFilterPeriod.THIS_MONTH) }
+    var selectedFilter by remember { mutableStateOf("GIDER") } // "GIDER" or "GELIR"
 
-    val totalIncome = transactions
+    // 1. Tarih Aralığı Hesaplama
+    val (startMs, endMs) = remember(selectedPeriod) {
+        DateFilterHelper.getDateRange(selectedPeriod)
+    }
+
+    val periodDateText = remember(startMs, endMs, selectedPeriod) {
+        DateFilterHelper.formatDateRange(startMs, endMs, selectedPeriod)
+    }
+
+    // 2. İşlemleri Döneme Göre Filtreleme
+    val periodTransactions = remember(allTransactions, startMs, endMs, selectedPeriod) {
+        allTransactions.filter { transaction ->
+            if (selectedPeriod == DateFilterPeriod.ALL_TIME) {
+                true
+            } else {
+                transaction.date in startMs..endMs
+            }
+        }
+    }
+
+    val totalIncome = periodTransactions
         .filter { it.type == "GELIR" || it.type == "INCOME" }
         .sumOf { it.amount }
-    val totalExpense = transactions
+    val totalExpense = periodTransactions
         .filter { it.type == "GIDER" || it.type == "EXPENSE" }
         .sumOf { it.amount }
     val netBalance = totalIncome - totalExpense
 
-    var selectedFilter by remember { mutableStateOf("GIDER") } // "GIDER" or "GELIR"
-
-    val filteredTransactions = transactions.filter {
+    val filteredTransactions = periodTransactions.filter {
         if (selectedFilter == "GIDER") {
             it.type == "GIDER" || it.type == "EXPENSE"
         } else {
@@ -66,25 +92,52 @@ fun ReportScreen(
         }
         .sortedByDescending { it.totalAmount }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Column {
                     Text(
                         text = "Raporlar & Analiz",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = periodDateText,
+                        fontSize = 12.sp,
+                        color = Color.Gray
                     )
                 }
-            )
-        }
-    ) { paddingValues ->
+            }
+        )
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
+            // Dönem Seçici Çipleri
+            item {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(DateFilterPeriod.entries.toTypedArray()) { period ->
+                        val isSelected = selectedPeriod == period
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedPeriod = period },
+                            label = { Text(period.label, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
+                    }
+                }
+            }
+
             // 1. Özet Kartları
             item {
                 ReportSummaryCard(
@@ -170,7 +223,7 @@ fun ReportScreen(
             // 5. Ek İstatistikler Kartı
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                StatisticsOverviewCard(transactions = transactions)
+                StatisticsOverviewCard(transactions = periodTransactions)
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -219,10 +272,10 @@ fun ReportSummaryCard(income: Double, expense: Double, netBalance: Double) {
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
+                            .background(IncomeContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("↑", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("↑", color = IncomeGreen, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
@@ -230,7 +283,7 @@ fun ReportSummaryCard(income: Double, expense: Double, netBalance: Double) {
                         Text(
                             "₺${String.format(Locale.getDefault(), "%.2f", income)}",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2E7D32),
+                            color = IncomeGreen,
                             fontSize = 14.sp
                         )
                     }
@@ -241,10 +294,10 @@ fun ReportSummaryCard(income: Double, expense: Double, netBalance: Double) {
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF44336).copy(alpha = 0.2f)),
+                            .background(ExpenseContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("↓", color = Color(0xFFC62828), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("↓", color = ExpenseTerracotta, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
@@ -252,7 +305,7 @@ fun ReportSummaryCard(income: Double, expense: Double, netBalance: Double) {
                         Text(
                             "₺${String.format(Locale.getDefault(), "%.2f", expense)}",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFC62828),
+                            color = ExpenseTerracotta,
                             fontSize = 14.sp
                         )
                     }
@@ -308,14 +361,14 @@ fun ClipProgressRatioBar(progress: Float) {
             .fillMaxWidth()
             .height(12.dp)
             .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xFFF44336)) // Base Gider rengi (Kırmızı)
+            .background(ExpenseTerracotta) // Muted Terracotta (Gider)
     ) {
         if (progress > 0f) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
-                    .background(Color(0xFF4CAF50)) // Gelir rengi (Yeşil)
+                    .background(IncomeGreen) // Muted Forest Green (Gelir)
             )
         }
     }
@@ -323,7 +376,7 @@ fun ClipProgressRatioBar(progress: Float) {
 
 @Composable
 fun CategoryProgressItem(summary: CategorySummary, isExpense: Boolean) {
-    val barColor = if (isExpense) Color(0xFFF44336) else Color(0xFF4CAF50)
+    val barColor = if (isExpense) ExpenseTerracotta else IncomeGreen
     val categoryIcon = getCategoryIcon(summary.categoryName)
 
     Card(

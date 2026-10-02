@@ -5,11 +5,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,10 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.azracelik.harman.data.DateFilterHelper
+import app.azracelik.harman.data.DateFilterPeriod
 import app.azracelik.harman.data.Transaction
+import app.azracelik.harman.ui.theme.ExpenseContainer
+import app.azracelik.harman.ui.theme.ExpenseTerracotta
+import app.azracelik.harman.ui.theme.IncomeContainer
+import app.azracelik.harman.ui.theme.IncomeGreen
 import app.azracelik.harman.ui.theme.getCategoryIcon
 import app.azracelik.harman.viewmodel.TransactionViewModel
-import java.util.Calendar
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,30 +42,91 @@ import java.util.Locale
 fun DashboardScreen(
     viewModel: TransactionViewModel
 ) {
-    val transactions by viewModel.allTransactions.collectAsState(initial = emptyList())
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    val allTransactions by viewModel.allTransactions.collectAsState(initial = emptyList())
+    var selectedPeriod by remember { mutableStateOf(DateFilterPeriod.THIS_MONTH) }
+    var searchQuery by remember { mutableStateOf("") }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var transactionToDelete by remember { mutableStateOf<Transaction?>(null) }
 
-    val totalIncome = transactions.filter { it.type == "GELIR" || it.type == "INCOME" }.sumOf { it.amount }
-    val totalExpense = transactions.filter { it.type == "GIDER" || it.type == "EXPENSE" }.sumOf { it.amount }
+    // 1. Tarih Aralığı Hesaplama
+    val (startMs, endMs) = remember(selectedPeriod) {
+        DateFilterHelper.getDateRange(selectedPeriod)
+    }
+
+    val periodDateText = remember(startMs, endMs, selectedPeriod) {
+        DateFilterHelper.formatDateRange(startMs, endMs, selectedPeriod)
+    }
+
+    // 2. İşlemleri Tarihe ve Arama Sorgusuna Göre Filtreleme
+    val filteredTransactions = remember(allTransactions, startMs, endMs, searchQuery, selectedPeriod) {
+        allTransactions.filter { transaction ->
+            val matchesDate = if (selectedPeriod == DateFilterPeriod.ALL_TIME) {
+                true
+            } else {
+                transaction.date in startMs..endMs
+            }
+
+            val matchesSearch = if (searchQuery.isBlank()) {
+                true
+            } else {
+                transaction.categoryName.contains(searchQuery, ignoreCase = true) ||
+                        transaction.note.contains(searchQuery, ignoreCase = true)
+            }
+
+            matchesDate && matchesSearch
+        }
+    }
+
+    val totalIncome = filteredTransactions
+        .filter { it.type == "GELIR" || it.type == "INCOME" }
+        .sumOf { it.amount }
+    val totalExpense = filteredTransactions
+        .filter { it.type == "GIDER" || it.type == "EXPENSE" }
+        .sumOf { it.amount }
     val remainingBalance = totalIncome - totalExpense
 
-    if (showDeleteDialog) {
+    // Tümünü Sil Onay Diyalogu
+    if (showDeleteAllDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = { showDeleteAllDialog = false },
             title = { Text("Tüm İşlemleri Sil") },
             text = { Text("Kaydedilmiş tüm gelir ve gider verileri temizlenecektir. Emin misiniz?") },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.clearAllTransactions()
-                        showDeleteDialog = false
+                        showDeleteAllDialog = false
                     }
                 ) {
                     Text("Evet, Temizle", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(onClick = { showDeleteAllDialog = false }) {
+                    Text("Vazgeç")
+                }
+            }
+        )
+    }
+
+    // Tekli İşlem Silme Onay Diyalogu
+    if (transactionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { transactionToDelete = null },
+            title = { Text("İşlemi Sil") },
+            text = { Text("${transactionToDelete?.categoryName} işlemini silmek istediğinize emin misiniz?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        transactionToDelete?.let { viewModel.deleteTransaction(it) }
+                        transactionToDelete = null
+                    }
+                ) {
+                    Text("Sil", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { transactionToDelete = null }) {
                     Text("Vazgeç")
                 }
             }
@@ -65,11 +134,10 @@ fun DashboardScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. Üst Arka Plan Dalga/Daire Desenleri
         TopHeaderBackground()
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // Top Bar
+            // Üst Bar
             CenterAlignedTopAppBar(
                 title = {
                     Text(
@@ -80,8 +148,8 @@ fun DashboardScreen(
                     )
                 },
                 actions = {
-                    if (transactions.isNotEmpty()) {
-                        IconButton(onClick = { showDeleteDialog = true }) {
+                    if (allTransactions.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.DeleteOutline,
                                 contentDescription = "Tümünü Temizle",
@@ -95,24 +163,81 @@ fun DashboardScreen(
                 )
             )
 
-            // Duyarlı ve Kaydırılabilir İçerik
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                // Kalan Bütçe Halka Göstergesi
+                // 1. Kalan Bütçe Halka Göstergesi
                 item {
                     CircularBudgetGauge(
                         remainingBalance = remainingBalance,
                         totalIncome = totalIncome,
-                        totalExpense = totalExpense
+                        totalExpense = totalExpense,
+                        periodDateText = periodDateText
                     )
                 }
 
-                // Son İşlemler Başlığı
+                // 2. Dönem Seçici Filtre Çipleri
+                item {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(DateFilterPeriod.entries.toTypedArray()) { period ->
+                            val isSelected = selectedPeriod == period
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { selectedPeriod = period },
+                                label = { Text(period.label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // 3. Arama Çubuğu (Search Bar)
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Kategori veya not ara...", fontSize = 14.sp) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Ara",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Temizle",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        )
+                    )
+                }
+
+                // 4. Son İşlemler Başlığı
                 item {
                     Text(
                         text = "Son İşlemler",
@@ -122,26 +247,36 @@ fun DashboardScreen(
                     )
                 }
 
-                // İşlem Listesi veya Boş Durum
-                if (transactions.isEmpty()) {
+                // 5. İşlem Listesi veya Boş Durum
+                if (filteredTransactions.isEmpty()) {
                     item {
-                        Box(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 24.dp),
-                            contentAlignment = Alignment.Center
+                                .padding(vertical = 12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         ) {
-                            Text(
-                                text = "Henüz işlem bulunmuyor.\nAlt bardaki '+' butonuna basarak ekleyebilirsiniz.",
-                                textAlign = TextAlign.Center,
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (searchQuery.isNotBlank()) "Aramanızla eşleşen işlem bulunamadı." else "Bu dönemde kaydedilmiş işlem bulunmuyor.",
+                                    textAlign = TextAlign.Center,
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 } else {
-                    items(transactions) { transaction ->
-                        TransactionItem(transaction = transaction)
+                    items(filteredTransactions) { transaction ->
+                        TransactionItem(
+                            transaction = transaction,
+                            onDeleteClick = { transactionToDelete = transaction }
+                        )
                     }
                 }
             }
@@ -180,6 +315,7 @@ fun CircularBudgetGauge(
     remainingBalance: Double,
     totalIncome: Double,
     totalExpense: Double,
+    periodDateText: String,
     modifier: Modifier = Modifier
 ) {
     val progressRatio = if (totalIncome > 0) {
@@ -203,7 +339,6 @@ fun CircularBudgetGauge(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Dairesel Halka Göstergesi
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(170.dp)
@@ -215,7 +350,6 @@ fun CircularBudgetGauge(
                 ) {
                     val strokeWidthPx = 16.dp.toPx()
 
-                    // Arka Plan İlerleme Halkası
                     drawArc(
                         color = trackColor,
                         startAngle = 135f,
@@ -224,7 +358,6 @@ fun CircularBudgetGauge(
                         style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
                     )
 
-                    // Ön Plan Aktif Halka
                     drawArc(
                         color = strokeColor,
                         startAngle = 135f,
@@ -234,7 +367,6 @@ fun CircularBudgetGauge(
                     )
                 }
 
-                // Halka İçi Metin
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "kalan bütçe",
@@ -243,9 +375,10 @@ fun CircularBudgetGauge(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = getCurrentMonthPeriod(),
-                        fontSize = 11.sp,
-                        color = Color.Gray
+                        text = periodDateText,
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -259,7 +392,6 @@ fun CircularBudgetGauge(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Gelir / Gider Alt Detayları
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -269,10 +401,10 @@ fun CircularBudgetGauge(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF4CAF50).copy(alpha = 0.15f)),
+                            .background(IncomeContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("↑", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                        Text("↑", color = IncomeGreen, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
@@ -281,7 +413,7 @@ fun CircularBudgetGauge(
                             "₺${String.format(Locale.getDefault(), "%.2f", totalIncome)}",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2E7D32)
+                            color = IncomeGreen
                         )
                     }
                 }
@@ -298,10 +430,10 @@ fun CircularBudgetGauge(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF44336).copy(alpha = 0.15f)),
+                            .background(ExpenseContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("↓", color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
+                        Text("↓", color = ExpenseTerracotta, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
@@ -310,7 +442,7 @@ fun CircularBudgetGauge(
                             "₺${String.format(Locale.getDefault(), "%.2f", totalExpense)}",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFC62828)
+                            color = ExpenseTerracotta
                         )
                     }
                 }
@@ -320,11 +452,17 @@ fun CircularBudgetGauge(
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun TransactionItem(
+    transaction: Transaction,
+    onDeleteClick: () -> Unit
+) {
     val isIncome = transaction.type == "GELIR" || transaction.type == "INCOME"
-    val amountColor = if (isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
+    val amountColor = if (isIncome) IncomeGreen else ExpenseTerracotta
     val amountPrefix = if (isIncome) "+" else "-"
     val categoryIcon = getCategoryIcon(transaction.categoryName)
+    val formattedDate = remember(transaction.date) {
+        DateFilterHelper.formatTransactionDate(transaction.date)
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -339,8 +477,10 @@ fun TransactionItem(transaction: Transaction) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Kategori İkon Rozeti
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -372,23 +512,34 @@ fun TransactionItem(transaction: Transaction) {
                             color = Color.Gray
                         )
                     }
+                    Text(
+                        text = formattedDate,
+                        fontSize = 10.sp,
+                        color = Color.Gray.copy(alpha = 0.8f)
+                    )
                 }
             }
 
-            Text(
-                text = "$amountPrefix ₺${String.format(Locale.getDefault(), "%.2f", transaction.amount)}",
-                color = amountColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "$amountPrefix ₺${String.format(Locale.getDefault(), "%.2f", transaction.amount)}",
+                    color = amountColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Sil",
+                        tint = Color.Gray.copy(alpha = 0.4f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
         }
     }
-}
-
-fun getCurrentMonthPeriod(): String {
-    val calendar = Calendar.getInstance()
-    val monthNames = arrayOf("Eyl", "Ekm", "Kas", "Ara", "Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu")
-    val monthIndex = calendar.get(Calendar.MONTH)
-    val monthName = monthNames[monthIndex % monthNames.size]
-    return "1 $monthName - 30 $monthName"
 }

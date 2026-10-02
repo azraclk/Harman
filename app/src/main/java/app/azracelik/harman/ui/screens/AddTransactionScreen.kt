@@ -12,11 +12,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.azracelik.harman.data.Transaction
+import app.azracelik.harman.ui.theme.ExpenseTerracotta
+import app.azracelik.harman.ui.theme.IncomeGreen
 import app.azracelik.harman.ui.theme.getCategoryIcon
 import app.azracelik.harman.viewmodel.TransactionViewModel
 
@@ -76,8 +79,8 @@ fun AddTransactionScreen(
                 Button(
                     onClick = { isIncome = false },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!isIncome) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (!isIncome) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = if (!isIncome) ExpenseTerracotta else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (!isIncome) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -87,8 +90,8 @@ fun AddTransactionScreen(
                 Button(
                     onClick = { isIncome = true },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (isIncome) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = if (isIncome) IncomeGreen else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (isIncome) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     modifier = Modifier.weight(1f)
                 ) {

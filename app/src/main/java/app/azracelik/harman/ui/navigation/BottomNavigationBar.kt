@@ -36,11 +36,10 @@ fun BottomNavigationBar(
             .wrapContentHeight(),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // 1. Alt Bar Yüzeyi
+        // 1. Alt Bar Yüzeyi (Üst boşluğu sıfırlandı)
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 20.dp) // Yükseltilmiş FAB için üst alan
                 .shadow(
                     elevation = 12.dp,
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -51,7 +50,7 @@ fun BottomNavigationBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .height(68.dp)
                     .padding(horizontal = 36.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -81,12 +80,12 @@ fun BottomNavigationBar(
             }
         }
 
-        // 2. Yükseltilmiş Ortadaki '+' Floating Action Button (Kesilmeden taşar)
+        // 2. Yükseltilmiş Ortadaki '+' Floating Action Button (Offset ile yukarı taşır, boşluk bırakmaz)
         val isAddSelected = currentRoute == "add_transaction"
         Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .size(56.dp)
+                .offset(y = (-20).dp)
+                .size(54.dp)
                 .shadow(10.dp, CircleShape)
                 .clip(CircleShape)
                 .background(
@@ -100,7 +99,7 @@ fun BottomNavigationBar(
                 imageVector = Icons.Filled.Add,
                 contentDescription = "İşlem Ekle",
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(30.dp)
             )
         }
     }
