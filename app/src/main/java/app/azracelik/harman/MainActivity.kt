@@ -4,6 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.navigation.NavBackStackEntry
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
@@ -77,6 +92,32 @@ private val tabs = listOf(
     TabItem(Route.Goals, R.string.nav_goals, Icons.Rounded.Flag)
 )
 
+/** Sayfa geçişi ve nav bar aynı süre/eğri ile hareket eder. */
+private const val NAV_MS = 350
+private fun <T> navSpec() = tween<T>(NAV_MS, easing = FastOutSlowInEasing)
+
+private fun tabIndex(entry: NavBackStackEntry) =
+    tabs.indexOfFirst { it.route.path == entry.destination.route }
+
+/** Hedef sekme sağdaysa +1, soldaysa -1, sekme dışıysa 0. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.direction(): Int {
+    val from = tabIndex(initialState)
+    val to = tabIndex(targetState)
+    return if (from < 0 || to < 0 || from == to) 0 else if (to > from) 1 else -1
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.pageEnter(): EnterTransition {
+    val d = direction()
+    return if (d == 0) fadeIn(navSpec())
+    else slideInHorizontally(navSpec()) { it / 5 * d } + fadeIn(navSpec())
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.pageExit(): ExitTransition {
+    val d = direction()
+    return if (d == 0) fadeOut(navSpec())
+    else slideOutHorizontally(navSpec()) { -it / 5 * d } + fadeOut(navSpec())
+}
+
 /** [tx] null ise yeni işlem. */
 private class SheetRequest(val tx: Transaction?)
 
@@ -118,7 +159,11 @@ private fun HarmanRoot(appViewModel: AppViewModel = viewModel(factory = ViewMode
         NavHost(
             navController = navController,
             startDestination = startRoute.path,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = { pageEnter() },
+            exitTransition = { pageExit() },
+            popEnterTransition = { pageEnter() },
+            popExitTransition = { pageExit() }
         ) {
             composable(Route.Onboarding.path) {
                 OnboardingScreen(onFinish = { limit ->
@@ -178,27 +223,41 @@ private fun FloatingNavBar(isSelected: (TabItem) -> Boolean, onSelect: (TabItem)
             tabs.forEach { tab ->
                 val selected = isSelected(tab)
                 val label = stringResource(tab.labelRes)
+                val pill by animateColorAsState(
+                    if (selected) MaterialTheme.semantic.butter.container else Color.Transparent,
+                    navSpec(), label = "pill"
+                )
+                val iconTint by animateColorAsState(
+                    if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f),
+                    navSpec(), label = "iconTint"
+                )
+                val hPad by animateDpAsState(if (selected) 18.dp else 16.dp, navSpec(), label = "hPad")
                 Row(
                     Modifier
                         .height(46.dp)
                         .clip(RoundedCornerShape(23.dp))
-                        .background(if (selected) MaterialTheme.semantic.butter.container else Color.Transparent)
+                        .background(pill)
                         .clickable(role = Role.Tab) { onSelect(tab) }
-                        .padding(horizontal = if (selected) 18.dp else 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = hPad),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         tab.icon,
                         contentDescription = if (selected) null else label,
-                        tint = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+                        tint = iconTint
                     )
-                    if (selected) {
+                    AnimatedVisibility(
+                        visible = selected,
+                        enter = expandHorizontally(navSpec()) + fadeIn(navSpec()),
+                        exit = shrinkHorizontally(navSpec()) + fadeOut(navSpec())
+                    ) {
                         Text(
                             label,
+                            modifier = Modifier.padding(start = 8.dp),
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
                         )
                     }
                 }
