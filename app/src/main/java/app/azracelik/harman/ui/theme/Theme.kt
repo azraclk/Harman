@@ -11,30 +11,40 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-/** Material rollerinde karşılığı olmayan, anlamsal renkler. */
+/** Bir bento kutusunun zemini ve üzerindeki metin/ikon rengi. */
+@Immutable
+data class Tile(val container: Color, val content: Color)
+
+/** Material rollerinde karşılığı olmayan, anlamsal renkler ve pastel kutular. */
 @Immutable
 data class SemanticColors(
     val income: Color,
-    val incomeContainer: Color,
     val expense: Color,
-    val expenseContainer: Color,
-    val warning: Color
+    val warning: Color,
+    val mint: Tile,
+    val lilac: Tile,
+    val peach: Tile,
+    val butter: Tile
 )
 
 private val LightSemantic = SemanticColors(
-    income = IncomeGreen,
-    incomeContainer = IncomeContainer,
-    expense = ExpenseTerracotta,
-    expenseContainer = ExpenseContainer,
-    warning = WarningAmber
+    income = IncomeText,
+    expense = ExpenseText,
+    warning = WarningText,
+    mint = Tile(MintTile, OnMint),
+    lilac = Tile(LilacTile, OnLilac),
+    peach = Tile(PeachTile, OnPeach),
+    butter = Tile(ButterTile, OnButter)
 )
 
 private val DarkSemantic = SemanticColors(
-    income = IncomeGreenDark,
-    incomeContainer = IncomeContainerDark,
-    expense = ExpenseTerracottaDark,
-    expenseContainer = ExpenseContainerDark,
-    warning = WarningAmberDark
+    income = IncomeTextDark,
+    expense = ExpenseTextDark,
+    warning = WarningTextDark,
+    mint = Tile(MintTileDark, OnMintDark),
+    lilac = Tile(LilacTileDark, OnLilacDark),
+    peach = Tile(PeachTileDark, OnPeachDark),
+    butter = Tile(ButterTileDark, OnButterDark)
 )
 
 val LocalSemanticColors = staticCompositionLocalOf { LightSemantic }
@@ -42,43 +52,46 @@ val LocalSemanticColors = staticCompositionLocalOf { LightSemantic }
 val MaterialTheme.semantic: SemanticColors
     @Composable @ReadOnlyComposable get() = LocalSemanticColors.current
 
-private val DarkColorScheme = darkColorScheme(
-    primary = SageLight,
-    onPrimary = Color(0xFF1E281C),
-    primaryContainer = Color(0xFF3A4638),
-    onPrimaryContainer = Color(0xFFE8EFE6),
-    secondary = SageDark,
+private val LightColorScheme = lightColorScheme(
+    primary = Ink,
+    onPrimary = Color.White,
+    primaryContainer = LilacTile,
+    onPrimaryContainer = OnLilac,
+    secondary = OnLilac,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFF3A4638),
-    onSecondaryContainer = Color(0xFFE8EFE6),
-    tertiary = WarmSand,
-    background = Color(0xFF1A1E19),
-    onBackground = WarmCream,
-    surface = Color(0xFF232822),
-    onSurface = WarmCream,
-    surfaceVariant = Color(0xFF2E352C),
-    onSurfaceVariant = WarmSand,
-    outlineVariant = Color(0xFF3F473D)
+    secondaryContainer = LilacTile,
+    onSecondaryContainer = Color(0xFF2B2260),
+    tertiary = ButterTile,
+    onTertiary = OnButter,
+    background = BentoBackground,
+    onBackground = Ink,
+    surface = Color.White,
+    onSurface = Ink,
+    surfaceVariant = BentoTrack,
+    onSurfaceVariant = BentoMuted,
+    outline = Color(0xFF8D89B3),
+    outlineVariant = BentoOutline
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = SageDark,
-    onPrimary = Color.White,
-    primaryContainer = SageContainer,
-    onPrimaryContainer = TextDark,
-    secondary = SageLight,
-    onSecondary = TextDark,
-    secondaryContainer = SageContainer,
-    onSecondaryContainer = TextDark,
-    tertiary = WarmSand,
-    onTertiary = TextDark,
-    background = WarmCream,
-    onBackground = TextDark,
-    surface = Color.White,
-    onSurface = TextDark,
-    surfaceVariant = Color(0xFFF3EBDF),
-    onSurfaceVariant = TextMuted,
-    outlineVariant = Color(0xFFE6DDCF)
+private val DarkColorScheme = darkColorScheme(
+    primary = InkDark,
+    onPrimary = Ink,
+    primaryContainer = LilacTileDark,
+    onPrimaryContainer = OnLilacDark,
+    secondary = OnLilacDark,
+    onSecondary = Ink,
+    secondaryContainer = LilacTileDark,
+    onSecondaryContainer = OnLilacDark,
+    tertiary = ButterTileDark,
+    onTertiary = OnButterDark,
+    background = BentoBackgroundDark,
+    onBackground = InkDark,
+    surface = BentoSurfaceDark,
+    onSurface = InkDark,
+    surfaceVariant = BentoTrackDark,
+    onSurfaceVariant = BentoMutedDark,
+    outline = Color(0xFF6C6894),
+    outlineVariant = BentoOutlineDark
 )
 
 @Composable

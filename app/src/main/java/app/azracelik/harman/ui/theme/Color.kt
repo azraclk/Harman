@@ -2,25 +2,45 @@ package app.azracelik.harman.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Harman: doğal, huzurlu palet
-val SageDark = Color(0xFF778873)
-val SageLight = Color(0xFFA1BC98)
-val WarmSand = Color(0xFFDCCFC0)
-val WarmCream = Color(0xFFFDF6ED)
+// Harman "Bento" paleti: lila-beyaz zemin, mürekkep lacivert eylem rengi, pastel kutular.
 
-val IncomeGreen = Color(0xFF486946)
-val IncomeContainer = Color(0xFFE2EBE0)
-val ExpenseTerracotta = Color(0xFFA8574E)
-val ExpenseContainer = Color(0xFFF7E8E6)
-val WarningAmber = Color(0xFFC08A3E)
+// Açık tema
+val Ink = Color(0xFF22203A)
+val BentoBackground = Color(0xFFF3F0FA)
+val BentoTrack = Color(0xFFE6E1F4)
+val BentoOutline = Color(0xFFE2DDF0)
+val BentoMuted = Color(0xFF6B6890)
 
-val TextDark = Color(0xFF2C332B)
-val TextMuted = Color(0xFF636A60)
-val SageContainer = Color(0xFFE4EFE1)
+val MintTile = Color(0xFFCDEFD8)
+val OnMint = Color(0xFF2F5A41)
+val LilacTile = Color(0xFFDCD3FF)
+val OnLilac = Color(0xFF4B3E99)
+val PeachTile = Color(0xFFFFD3C2)
+val OnPeach = Color(0xFF9A4326)
+val ButterTile = Color(0xFFFFE9A8)
+val OnButter = Color(0xFF7A5B00)
 
-// Koyu tema karşılıkları (göz yormayan, düşük doygunluk)
-val IncomeGreenDark = Color(0xFF9CC596)
-val IncomeContainerDark = Color(0xFF2B3A2A)
-val ExpenseTerracottaDark = Color(0xFFE09A91)
-val ExpenseContainerDark = Color(0xFF402725)
-val WarningAmberDark = Color(0xFFE0B36A)
+val IncomeText = Color(0xFF3E7A56)
+val ExpenseText = Color(0xFFB0472C)
+val WarningText = Color(0xFFB07A12)
+
+// Koyu tema: aynı tonlar, düşük parlaklık
+val InkDark = Color(0xFFEDEAFB)
+val BentoBackgroundDark = Color(0xFF14121E)
+val BentoSurfaceDark = Color(0xFF1E1B2D)
+val BentoTrackDark = Color(0xFF2E2A45)
+val BentoOutlineDark = Color(0xFF38334F)
+val BentoMutedDark = Color(0xFFA9A5CC)
+
+val MintTileDark = Color(0xFF1F3A2C)
+val OnMintDark = Color(0xFFBFE8CC)
+val LilacTileDark = Color(0xFF2D2750)
+val OnLilacDark = Color(0xFFCFC6FF)
+val PeachTileDark = Color(0xFF4A2A20)
+val OnPeachDark = Color(0xFFFFC9B5)
+val ButterTileDark = Color(0xFF4A3D12)
+val OnButterDark = Color(0xFFFFE08A)
+
+val IncomeTextDark = Color(0xFF8FD3A8)
+val ExpenseTextDark = Color(0xFFFFA68F)
+val WarningTextDark = Color(0xFFF0C46A)

@@ -11,11 +11,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,7 +37,9 @@ import app.azracelik.harman.domain.minorToInput
 import app.azracelik.harman.domain.parseMoneyToMinor
 import app.azracelik.harman.ui.GoalsViewModel
 import app.azracelik.harman.ui.ViewModelFactory
+import app.azracelik.harman.ui.components.BentoTile
 import app.azracelik.harman.ui.components.SoftProgressBar
+import app.azracelik.harman.ui.theme.Tile
 import app.azracelik.harman.ui.theme.semantic
 
 @Composable
@@ -65,14 +67,10 @@ fun GoalsScreen(
 }
 
 @Composable
-private fun SectionCard(title: String, content: @Composable () -> Unit) {
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+private fun SectionCard(title: String, tile: Tile, content: @Composable () -> Unit) {
+    BentoTile(tile, Modifier.fillMaxWidth(), contentPadding = 20.dp) {
+        Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+        Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             content()
         }
     }
@@ -84,7 +82,7 @@ private fun LimitCard(limitMinor: Long, onSave: (Long) -> Unit) {
     val parsed = parseMoneyToMinor(text)
     val changed = if (text.isBlank()) limitMinor != 0L else parsed != null && parsed != limitMinor
 
-    SectionCard(stringResource(R.string.goals_limit_title)) {
+    SectionCard(stringResource(R.string.goals_limit_title), MaterialTheme.semantic.lilac) {
         MoneyField(text, { text = it }, stringResource(R.string.goals_limit_title))
         Text(
             stringResource(R.string.goals_limit_hint),
@@ -115,15 +113,16 @@ private fun SavingsCard(
     var target by remember(goal) { mutableStateOf(goal?.let { minorToInput(it.targetMinor) } ?: "") }
     var adjust by remember { mutableStateOf<Int?>(null) } // +1 ekle, -1 çıkar
 
-    SectionCard(stringResource(R.string.goals_savings_title)) {
+    SectionCard(stringResource(R.string.goals_savings_title), MaterialTheme.semantic.butter) {
         if (editing || goal == null) {
-            OutlinedTextField(
+            TextField(
                 value = name,
                 onValueChange = { name = it.take(30) },
                 label = { Text(stringResource(R.string.goals_goal_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = fieldColors()
             )
             MoneyField(target, { target = it }, stringResource(R.string.goals_goal_target))
             val targetMinor = parseMoneyToMinor(target)
@@ -211,7 +210,7 @@ private fun SavingsCard(
 
 @Composable
 internal fun MoneyField(value: String, onChange: (String) -> Unit, label: String, modifier: Modifier = Modifier) {
-    OutlinedTextField(
+    TextField(
         value = value,
         onValueChange = { v -> onChange(v.filter { it.isDigit() || it == ',' || it == '.' }.take(14)) },
         modifier = modifier.fillMaxWidth(),
@@ -219,6 +218,16 @@ internal fun MoneyField(value: String, onChange: (String) -> Unit, label: String
         suffix = { Text("₺") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = fieldColors()
     )
 }
+
+@Composable
+internal fun fieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+    errorIndicatorColor = Color.Transparent
+)

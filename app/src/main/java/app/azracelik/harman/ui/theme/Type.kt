@@ -1,112 +1,50 @@
 package app.azracelik.harman.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import app.azracelik.harman.R
 
-val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
+/** Outfit (SIL OFL) uygulamaya gömülü değişken font; ağ/Play Services gerektirmez. */
+@OptIn(ExperimentalTextApi::class)
+val AppFontFamily = FontFamily(
+    listOf(
+        FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold, FontWeight.ExtraBold
+    ).map { weight ->
+        Font(
+            R.font.outfit_variable,
+            weight = weight,
+            variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight))
+        )
+    }
 )
 
-val fontName = GoogleFont("Plus Jakarta Sans")
-
-val AppFontFamily = FontFamily(
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
+private fun style(weight: FontWeight, size: Int, line: Int, spacing: Double = 0.0) = TextStyle(
+    fontFamily = AppFontFamily,
+    fontWeight = weight,
+    fontSize = size.sp,
+    lineHeight = line.sp,
+    letterSpacing = spacing.sp
 )
 
 val Typography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 28.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    ),
-    displayMedium = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 40.sp,
-        lineHeight = 48.sp
-    ),
-    headlineSmall = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp
-    ),
-    titleSmall = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    ),
-    bodySmall = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp
-    ),
-    labelMedium = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = AppFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp
-    )
+    displayLarge = style(FontWeight.ExtraBold, 50, 56, -1.0),
+    displayMedium = style(FontWeight.Bold, 40, 46, -0.8),
+    headlineLarge = style(FontWeight.Bold, 28, 34, -0.4),
+    headlineMedium = style(FontWeight.SemiBold, 22, 28),
+    headlineSmall = style(FontWeight.SemiBold, 18, 24),
+    titleLarge = style(FontWeight.Bold, 19, 26),
+    titleMedium = style(FontWeight.SemiBold, 16, 22),
+    titleSmall = style(FontWeight.SemiBold, 14, 20),
+    bodyLarge = style(FontWeight.Normal, 16, 24),
+    bodyMedium = style(FontWeight.Normal, 14, 20),
+    bodySmall = style(FontWeight.Normal, 12, 16),
+    labelLarge = style(FontWeight.SemiBold, 14, 20),
+    labelMedium = style(FontWeight.Medium, 12, 16),
+    labelSmall = style(FontWeight.Medium, 11, 16)
 )

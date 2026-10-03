@@ -6,19 +6,26 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import app.azracelik.harman.ui.theme.semantic
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -90,42 +97,21 @@ private fun HarmanRoot(appViewModel: AppViewModel = viewModel(factory = ViewMode
     var sheet by remember { mutableStateOf<SheetRequest?>(null) }
 
     val showChrome = tabs.any { tab -> destination?.hierarchy?.any { it.route == tab.route.path } == true }
-    val showFab = destination?.route == Route.Home.path || destination?.route == Route.Report.path
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showChrome) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    tabs.forEach { tab ->
-                        NavigationBarItem(
-                            selected = destination?.hierarchy?.any { it.route == tab.route.path } == true,
-                            onClick = {
-                                navController.navigate(tab.route.path) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(stringResource(tab.labelRes)) },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        )
+                FloatingNavBar(
+                    isSelected = { tab -> destination?.hierarchy?.any { it.route == tab.route.path } == true },
+                    onSelect = { tab ->
+                        navController.navigate(tab.route.path) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
-            }
-        },
-        floatingActionButton = {
-            if (showFab) {
-                FloatingActionButton(
-                    onClick = { sheet = SheetRequest(null) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_transaction))
-                }
+                )
             }
         }
     ) { innerPadding ->
@@ -167,5 +153,56 @@ private fun HarmanRoot(appViewModel: AppViewModel = viewModel(factory = ViewMode
             onSave = { appViewModel.save(it) },
             onDelete = { appViewModel.delete(it) }
         )
+    }
+}
+
+/** Yüzen, koyu "hap" çubuk: seçili sekme sarı bir hapla etiketini açar. */
+@Composable
+private fun FloatingNavBar(isSelected: (TabItem) -> Boolean, onSelect: (TabItem) -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 18.dp, vertical = 10.dp)
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(horizontal = 10.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tabs.forEach { tab ->
+                val selected = isSelected(tab)
+                val label = stringResource(tab.labelRes)
+                Row(
+                    Modifier
+                        .height(46.dp)
+                        .clip(RoundedCornerShape(23.dp))
+                        .background(if (selected) MaterialTheme.semantic.butter.container else Color.Transparent)
+                        .clickable(role = Role.Tab) { onSelect(tab) }
+                        .padding(horizontal = if (selected) 18.dp else 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        tab.icon,
+                        contentDescription = if (selected) null else label,
+                        tint = if (selected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+                    )
+                    if (selected) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
     }
 }
