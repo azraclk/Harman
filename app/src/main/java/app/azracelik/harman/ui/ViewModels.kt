@@ -59,14 +59,14 @@ class AppViewModel(private val repo: BudgetRepository) : ViewModel() {
 data class HomeUiState(
     val loaded: Boolean = false,
     val month: MonthData = MonthData(emptyList(), summarize(emptyList(), 0)),
-    val goal: SavingsGoal? = null
+    val goals: List<SavingsGoal> = emptyList()
 )
 
 class HomeViewModel(repo: BudgetRepository) : ViewModel() {
     val month: YearMonth = YearMonth.now()
 
     val state: StateFlow<HomeUiState> =
-        combine(repo.month(month), repo.goal) { data, goal -> HomeUiState(true, data, goal) }
+        combine(repo.month(month), repo.goals) { data, goals -> HomeUiState(true, data, goals) }
             .stateInUi(viewModelScope, HomeUiState())
 }
 
@@ -85,15 +85,16 @@ class ReportViewModel(private val repo: BudgetRepository) : ViewModel() {
     fun canGoNext(month: YearMonth) = month < YearMonth.now()
 }
 
-data class GoalsUiState(val limitMinor: Long = 0, val goal: SavingsGoal? = null)
+data class GoalsUiState(val limitMinor: Long = 0, val goals: List<SavingsGoal> = emptyList())
 
 class GoalsViewModel(private val repo: BudgetRepository) : ViewModel() {
     val state: StateFlow<GoalsUiState> =
-        combine(repo.monthlyLimitMinor, repo.goal) { l, g -> GoalsUiState(l, g) }
+        combine(repo.monthlyLimitMinor, repo.goals) { l, g -> GoalsUiState(l, g) }
             .stateInUi(viewModelScope, GoalsUiState())
 
     fun setLimit(minor: Long) = viewModelScope.launch { repo.setMonthlyLimit(minor) }
-    fun saveGoal(name: String, targetMinor: Long) = viewModelScope.launch { repo.saveGoal(name, targetMinor) }
-    fun addToGoal(deltaMinor: Long) = viewModelScope.launch { repo.addToGoal(deltaMinor) }
-    fun deleteGoal() = viewModelScope.launch { repo.deleteGoal() }
+    fun saveGoal(id: Long = 0L, name: String, targetMinor: Long) =
+        viewModelScope.launch { repo.saveGoal(id, name, targetMinor) }
+    fun addToGoal(goalId: Long, deltaMinor: Long) = viewModelScope.launch { repo.addToGoal(goalId, deltaMinor) }
+    fun deleteGoal(goal: SavingsGoal) = viewModelScope.launch { repo.deleteGoal(goal) }
 }

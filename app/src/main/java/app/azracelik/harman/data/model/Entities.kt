@@ -15,10 +15,10 @@ data class Transaction(
     val note: String = ""
 )
 
-/** Tek bir tasarruf hedefi tutulur (id her zaman 1). */
+/** Birden fazla tasarruf hedefi tutulabilir. */
 @Entity(tableName = "savings_goal")
 data class SavingsGoal(
-    @PrimaryKey val id: Int = 1,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val targetMinor: Long,
     val savedMinor: Long = 0

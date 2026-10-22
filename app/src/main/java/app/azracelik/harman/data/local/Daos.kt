@@ -28,14 +28,17 @@ interface TransactionDao {
 
 @Dao
 interface SavingsGoalDao {
-    @Query("SELECT * FROM savings_goal WHERE id = 1")
-    fun observe(): Flow<SavingsGoal?>
+    @Query("SELECT * FROM savings_goal ORDER BY id DESC")
+    fun observeAll(): Flow<List<SavingsGoal>>
 
-    @Query("SELECT * FROM savings_goal WHERE id = 1")
-    suspend fun get(): SavingsGoal?
+    @Query("SELECT * FROM savings_goal WHERE id = :id")
+    suspend fun getById(id: Long): SavingsGoal?
 
     @Upsert
     suspend fun upsert(goal: SavingsGoal)
+
+    @Delete
+    suspend fun delete(goal: SavingsGoal)
 
     @Query("DELETE FROM savings_goal")
     suspend fun clear()

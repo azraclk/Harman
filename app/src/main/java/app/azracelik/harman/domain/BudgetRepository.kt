@@ -18,7 +18,7 @@ class BudgetRepository(
 ) {
     val monthlyLimitMinor: Flow<Long> = settings.monthlyLimitMinor
     val onboardingDone: Flow<Boolean> = settings.onboardingDone
-    val goal: Flow<SavingsGoal?> = goalDao.observe()
+    val goals: Flow<List<SavingsGoal>> = goalDao.observeAll()
 
     fun month(month: YearMonth): Flow<MonthData> =
         combine(
@@ -33,16 +33,17 @@ class BudgetRepository(
     suspend fun setMonthlyLimit(minor: Long) = settings.setMonthlyLimit(minor)
     suspend fun completeOnboarding() = settings.completeOnboarding()
 
-    suspend fun saveGoal(name: String, targetMinor: Long) {
-        val saved = goalDao.get()?.savedMinor ?: 0L
-        goalDao.upsert(SavingsGoal(name = name, targetMinor = targetMinor, savedMinor = saved))
+    suspend fun saveGoal(id: Long = 0L, name: String, targetMinor: Long) {
+        val existing = if (id > 0L) goalDao.getById(id) else null
+        val saved = existing?.savedMinor ?: 0L
+        goalDao.upsert(SavingsGoal(id = id, name = name, targetMinor = targetMinor, savedMinor = saved))
     }
 
     /** Birikime ekler (pozitif) veya çıkarır (negatif); 0'ın altına inmez. */
-    suspend fun addToGoal(deltaMinor: Long) {
-        val current = goalDao.get() ?: return
+    suspend fun addToGoal(goalId: Long, deltaMinor: Long) {
+        val current = goalDao.getById(goalId) ?: return
         goalDao.upsert(current.copy(savedMinor = (current.savedMinor + deltaMinor).coerceAtLeast(0)))
     }
 
-    suspend fun deleteGoal() = goalDao.clear()
+    suspend fun deleteGoal(goal: SavingsGoal) = goalDao.delete(goal)
 }

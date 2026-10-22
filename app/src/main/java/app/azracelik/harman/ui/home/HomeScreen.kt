@@ -93,7 +93,7 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(4.dp))
             GoalTile(
-                state.goal,
+                state.goals,
                 // Hero sarıyken hedef kutusu aynı renkte olmasın
                 tile = if (summary.level == BudgetLevel.WARNING) MaterialTheme.semantic.mint
                 else MaterialTheme.semantic.butter,
@@ -262,7 +262,7 @@ private fun FlowTile(label: String, amountMinor: Long, icon: ImageVector, tile: 
 }
 
 @Composable
-private fun GoalTile(goal: SavingsGoal?, tile: Tile, onClick: () -> Unit) {
+private fun GoalTile(goals: List<SavingsGoal>, tile: Tile, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -278,28 +278,31 @@ private fun GoalTile(goal: SavingsGoal?, tile: Tile, onClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) { Icon(Icons.Rounded.Flag, null, Modifier.size(24.dp), tint = tile.content) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (goal == null) {
+            if (goals.isEmpty()) {
                 Text(
                     stringResource(R.string.goal_card_empty),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
             } else {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                val totalSaved = goals.sumOf { it.savedMinor }
+                val totalTarget = goals.sumOf { it.targetMinor }
+                val topGoal = goals.first()
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        goal.name,
+                        if (goals.size == 1) topGoal.name else "${topGoal.name} (+${goals.size - 1})",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        formatMoney(goal.savedMinor, false) + " / " + formatMoney(goal.targetMinor, false),
+                        formatMoney(totalSaved, showDecimals = false) + " / " + formatMoney(totalTarget, showDecimals = false),
                         style = MaterialTheme.typography.labelLarge,
                         color = tile.content
                     )
                 }
                 SoftProgressBar(
-                    fraction = if (goal.targetMinor > 0) goal.savedMinor.toFloat() / goal.targetMinor else 0f,
+                    fraction = if (totalTarget > 0) totalSaved.toFloat() / totalTarget else 0f,
                     color = MaterialTheme.colorScheme.primary,
                     track = tile.content.copy(alpha = 0.16f)
                 )

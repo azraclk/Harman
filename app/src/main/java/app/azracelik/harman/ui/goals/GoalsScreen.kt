@@ -9,14 +9,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +51,8 @@ fun GoalsScreen(
     viewModel: GoalsViewModel = viewModel(factory = ViewModelFactory)
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var editingGoal by remember { mutableStateOf<SavingsGoal?>(null) } // null & showCreateDialog = yeni hedef
+    var showCreateDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier
@@ -57,11 +62,55 @@ fun GoalsScreen(
     ) {
         Text(stringResource(R.string.goals_title), style = MaterialTheme.typography.headlineLarge)
         LimitCard(state.limitMinor, onSave = viewModel::setLimit)
-        SavingsCard(
-            goal = state.goal,
-            onSaveGoal = viewModel::saveGoal,
-            onAdd = viewModel::addToGoal,
-            onDelete = viewModel::deleteGoal
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(stringResource(R.string.goals_savings_title), style = MaterialTheme.typography.titleLarge)
+            Button(
+                onClick = {
+                    editingGoal = null
+                    showCreateDialog = true
+                },
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                Text(stringResource(R.string.goals_goal_name))
+            }
+        }
+
+        if (state.goals.isEmpty()) {
+            BentoTile(MaterialTheme.semantic.butter, Modifier.fillMaxWidth(), contentPadding = 20.dp) {
+                Text(
+                    stringResource(R.string.goal_card_empty),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        } else {
+            state.goals.forEach { goal ->
+                GoalCard(
+                    goal = goal,
+                    onEdit = { editingGoal = goal },
+                    onAdd = { delta -> viewModel.addToGoal(goal.id, delta) },
+                    onDelete = { viewModel.deleteGoal(goal) }
+                )
+            }
+        }
+    }
+
+    if (showCreateDialog || editingGoal != null) {
+        GoalEditDialog(
+            initialGoal = editingGoal,
+            onDismiss = {
+                showCreateDialog = false
+                editingGoal = null
+            },
+            onSave = { id, name, targetMinor ->
+                viewModel.saveGoal(id, name, targetMinor)
+            }
         )
     }
 }
@@ -102,110 +151,128 @@ private fun LimitCard(limitMinor: Long, onSave: (Long) -> Unit) {
 }
 
 @Composable
-private fun SavingsCard(
-    goal: SavingsGoal?,
-    onSaveGoal: (String, Long) -> Unit,
+private fun GoalCard(
+    goal: SavingsGoal,
+    onEdit: () -> Unit,
     onAdd: (Long) -> Unit,
     onDelete: () -> Unit
 ) {
-    var editing by remember(goal?.id, goal == null) { mutableStateOf(goal == null) }
-    var name by remember(goal) { mutableStateOf(goal?.name ?: "") }
-    var target by remember(goal) { mutableStateOf(goal?.let { minorToInput(it.targetMinor) } ?: "") }
-    var adjust by remember { mutableStateOf<Int?>(null) } // +1 ekle, -1 çıkar
+    var adjustSign by remember { mutableStateOf<Int?>(null) } // +1 ekle, -1 çıkar
 
-    SectionCard(stringResource(R.string.goals_savings_title), MaterialTheme.semantic.butter) {
-        if (editing || goal == null) {
-            TextField(
-                value = name,
-                onValueChange = { name = it.take(30) },
-                label = { Text(stringResource(R.string.goals_goal_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = fieldColors()
-            )
-            MoneyField(target, { target = it }, stringResource(R.string.goals_goal_target))
-            val targetMinor = parseMoneyToMinor(target)
-            Button(
-                onClick = {
-                    if (targetMinor != null) {
-                        onSaveGoal(name.trim(), targetMinor)
-                        editing = false
-                    }
-                },
-                enabled = name.isNotBlank() && targetMinor != null,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) { Text(stringResource(R.string.save)) }
-        } else {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(goal.name, style = MaterialTheme.typography.titleMedium)
-                TextButton(onClick = { editing = true }) { Text(stringResource(R.string.edit)) }
-            }
-            SoftProgressBar(
-                fraction = if (goal.targetMinor > 0) goal.savedMinor.toFloat() / goal.targetMinor else 0f,
-                color = MaterialTheme.colorScheme.primary,
-                height = 14.dp
-            )
+    BentoTile(MaterialTheme.semantic.butter, Modifier.fillMaxWidth(), contentPadding = 20.dp) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(goal.name, style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = onEdit) { Text(stringResource(R.string.edit)) }
+        }
+        SoftProgressBar(
+            fraction = if (goal.targetMinor > 0) goal.savedMinor.toFloat() / goal.targetMinor else 0f,
+            color = MaterialTheme.colorScheme.primary,
+            height = 14.dp,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        Text(
+            stringResource(
+                R.string.goals_goal_saved,
+                formatMoney(goal.savedMinor, false),
+                formatMoney(goal.targetMinor, false)
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (goal.savedMinor >= goal.targetMinor) {
             Text(
-                stringResource(
-                    R.string.goals_goal_saved,
-                    formatMoney(goal.savedMinor, false),
-                    formatMoney(goal.targetMinor, false)
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                stringResource(R.string.goals_reached),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.semantic.income,
+                modifier = Modifier.padding(top = 4.dp)
             )
-            if (goal.savedMinor >= goal.targetMinor) {
-                Text(
-                    stringResource(R.string.goals_reached),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.semantic.income
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(
-                    onClick = { adjust = 1 },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
-                ) { Text(stringResource(R.string.goals_add_saving)) }
-                OutlinedButton(
-                    onClick = { adjust = -1 },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
-                ) { Text(stringResource(R.string.goals_remove_saving)) }
-            }
-            TextButton(onClick = onDelete, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.goals_delete_goal), color = MaterialTheme.semantic.expense)
-            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 10.dp)) {
+            Button(
+                onClick = { adjustSign = 1 },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp)
+            ) { Text(stringResource(R.string.goals_add_saving)) }
+            OutlinedButton(
+                onClick = { adjustSign = -1 },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp)
+            ) { Text(stringResource(R.string.goals_remove_saving)) }
+        }
+        TextButton(onClick = onDelete, modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            Text(stringResource(R.string.goals_delete_goal), color = MaterialTheme.semantic.expense)
         }
     }
 
-    adjust?.let { sign ->
-        var amount by remember { mutableStateOf("") }
-        val minor = parseMoneyToMinor(amount)
+    adjustSign?.let { sign ->
+        var amountText by remember { mutableStateOf("") }
+        val minor = parseMoneyToMinor(amountText)
         AlertDialog(
-            onDismissRequest = { adjust = null },
+            onDismissRequest = { adjustSign = null },
             title = {
                 Text(stringResource(if (sign > 0) R.string.goals_add_saving else R.string.goals_remove_saving))
             },
-            text = { MoneyField(amount, { amount = it }, stringResource(R.string.goals_amount)) },
+            text = { MoneyField(amountText, { amountText = it }, stringResource(R.string.goals_amount)) },
             confirmButton = {
                 TextButton(
                     enabled = minor != null,
                     onClick = {
                         onAdd(sign * (minor ?: 0L))
-                        adjust = null
+                        adjustSign = null
                     }
                 ) { Text(stringResource(R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { adjust = null }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { adjustSign = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
+}
+
+@Composable
+private fun GoalEditDialog(
+    initialGoal: SavingsGoal?,
+    onDismiss: () -> Unit,
+    onSave: (id: Long, name: String, targetMinor: Long) -> Unit
+) {
+    var name by remember { mutableStateOf(initialGoal?.name ?: "") }
+    var targetText by remember { mutableStateOf(initialGoal?.let { minorToInput(it.targetMinor) } ?: "") }
+    val targetMinor = parseMoneyToMinor(targetText)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (initialGoal == null) stringResource(R.string.goals_savings_title) else stringResource(R.string.edit)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it.take(30) },
+                    label = { Text(stringResource(R.string.goals_goal_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = fieldColors()
+                )
+                MoneyField(targetText, { targetText = it }, stringResource(R.string.goals_goal_target))
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = name.isNotBlank() && targetMinor != null,
+                onClick = {
+                    if (targetMinor != null) {
+                        onSave(initialGoal?.id ?: 0L, name.trim(), targetMinor)
+                        onDismiss()
+                    }
+                }
+            ) { Text(stringResource(R.string.save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
 }
 
 @Composable
