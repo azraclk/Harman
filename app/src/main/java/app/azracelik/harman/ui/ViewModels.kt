@@ -34,18 +34,20 @@ val ViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
     initializer { HomeViewModel(repo()) }
     initializer { ReportViewModel(repo()) }
     initializer { GoalsViewModel(repo()) }
+    initializer { SettingsViewModel(repo()) }
 }
 
 private fun CreationExtras.repo(): BudgetRepository =
     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as HarmanApp).repository
 
-/** Uygulama geneli: onboarding durumu + işlem ekle/düzenle/sil. */
+/** Uygulama geneli: onboarding durumu + tema + işlem ekle/düzenle/sil. */
 class AppViewModel(private val repo: BudgetRepository) : ViewModel() {
     /** null = henüz yüklenmedi. */
     val onboardingDone: StateFlow<Boolean?> =
         repo.onboardingDone.map<Boolean, Boolean?> { it }.stateInUi(viewModelScope, null)
 
     val monthlyLimit: StateFlow<Long> = repo.monthlyLimitMinor.stateInUi(viewModelScope, 0L)
+    val themeMode: StateFlow<Int> = repo.themeMode.stateInUi(viewModelScope, 0)
 
     fun finishOnboarding(limitMinor: Long?) = viewModelScope.launch {
         if (limitMinor != null) repo.setMonthlyLimit(limitMinor)
@@ -97,4 +99,15 @@ class GoalsViewModel(private val repo: BudgetRepository) : ViewModel() {
         viewModelScope.launch { repo.saveGoal(id, name, targetMinor) }
     fun addToGoal(goalId: Long, deltaMinor: Long) = viewModelScope.launch { repo.addToGoal(goalId, deltaMinor) }
     fun deleteGoal(goal: SavingsGoal) = viewModelScope.launch { repo.deleteGoal(goal) }
+}
+
+data class SettingsUiState(val themeMode: Int = 0)
+
+class SettingsViewModel(private val repo: BudgetRepository) : ViewModel() {
+    val state: StateFlow<SettingsUiState> =
+        repo.themeMode.map { SettingsUiState(it) }.stateInUi(viewModelScope, SettingsUiState())
+
+    fun setThemeMode(mode: Int) = viewModelScope.launch { repo.setThemeMode(mode) }
+    fun resetOnboarding() = viewModelScope.launch { repo.resetOnboarding() }
+    fun clearAllData() = viewModelScope.launch { repo.clearAllData() }
 }

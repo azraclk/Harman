@@ -18,42 +18,44 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.navigation.NavBackStackEntry
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
-import app.azracelik.harman.ui.theme.semantic
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -67,7 +69,9 @@ import app.azracelik.harman.ui.goals.GoalsScreen
 import app.azracelik.harman.ui.home.HomeScreen
 import app.azracelik.harman.ui.onboarding.OnboardingScreen
 import app.azracelik.harman.ui.report.ReportScreen
+import app.azracelik.harman.ui.settings.SettingsScreen
 import app.azracelik.harman.ui.theme.HarmanTheme
+import app.azracelik.harman.ui.theme.semantic
 import app.azracelik.harman.ui.transaction.TransactionSheet
 
 class MainActivity : ComponentActivity() {
@@ -75,13 +79,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            HarmanTheme { HarmanRoot() }
+            val appViewModel: AppViewModel = viewModel(factory = ViewModelFactory)
+            val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (themeMode) {
+                1 -> false
+                2 -> true
+                else -> systemDark
+            }
+            HarmanTheme(darkTheme = darkTheme) {
+                HarmanRoot(appViewModel)
+            }
         }
     }
 }
 
 private enum class Route(val path: String) {
-    Onboarding("onboarding"), Home("home"), Report("report"), Goals("goals")
+    Onboarding("onboarding"), Home("home"), Report("report"), Goals("goals"), Settings("settings")
 }
 
 private class TabItem(val route: Route, val labelRes: Int, val icon: ImageVector)
@@ -89,7 +103,8 @@ private class TabItem(val route: Route, val labelRes: Int, val icon: ImageVector
 private val tabs = listOf(
     TabItem(Route.Home, R.string.nav_home, Icons.Rounded.Home),
     TabItem(Route.Report, R.string.nav_report, Icons.Rounded.BarChart),
-    TabItem(Route.Goals, R.string.nav_goals, Icons.Rounded.Flag)
+    TabItem(Route.Goals, R.string.nav_goals, Icons.Rounded.Flag),
+    TabItem(Route.Settings, R.string.nav_settings, Icons.Rounded.Settings)
 )
 
 /** Sayfa geçişi ve nav bar aynı süre/eğri ile hareket eder. */
@@ -138,6 +153,14 @@ private fun HarmanRoot(appViewModel: AppViewModel = viewModel(factory = ViewMode
     var sheet by remember { mutableStateOf<SheetRequest?>(null) }
 
     val showChrome = tabs.any { tab -> destination?.hierarchy?.any { it.route == tab.route.path } == true }
+
+    LaunchedEffect(done) {
+        if (!done && destination?.route != Route.Onboarding.path) {
+            navController.navigate(Route.Onboarding.path) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -188,6 +211,7 @@ private fun HarmanRoot(appViewModel: AppViewModel = viewModel(factory = ViewMode
             }
             composable(Route.Report.path) { ReportScreen() }
             composable(Route.Goals.path) { GoalsScreen() }
+            composable(Route.Settings.path) { SettingsScreen() }
         }
     }
 

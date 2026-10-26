@@ -34,6 +34,7 @@
     <string name="nav_home">Ana Sayfa</string>
     <string name="nav_report">Rapor</string>
     <string name="nav_goals">Hedefler</string>
+    <string name="nav_settings">Ayarlar</string>
     <string name="home_greeting">Bütçen</string>
     <string name="hero_left">Bu ay kalan</string>
     <string name="hero_over">Limit aşıldı</string>
@@ -82,4 +83,20 @@
     <string name="goals_delete_goal">Hedefi sil</string>
     <string name="goals_amount">Tutar</string>
     <string name="goals_reached">Hedefe ulaştın 🎉</string>
+
+    <!-- Ayarlar -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_appearance_title">Görünüm</string>
+    <string name="settings_theme_system">Sistem</string>
+    <string name="settings_theme_light">Açık</string>
+    <string name="settings_theme_dark">Koyu</string>
+    <string name="settings_budget_title">Bütçe &amp; Onboarding</string>
+    <string name="settings_reset_onboarding">Onboarding\'i Yeniden Başlat</string>
+    <string name="settings_data_title">Veri &amp; Gizlilik</string>
+    <string name="settings_clear_data">Tüm Verileri Sıfırla</string>
+    <string name="settings_clear_confirm_title">Tüm veriler silinsin mi?</string>
+    <string name="settings_clear_confirm_body">Tüm harcamalar, gelirler ve tasarruf hedefleri kalıcı olarak silinecektir. Bu işlem geri alınamaz.</string>
+    <string name="settings_about_title">Hakkında</string>
+    <string name="settings_app_version">Harman v1.0.0</string>
+    <string name="settings_about_body">Sade ve şık kişisel bütçe ve birikim takip uygulamanız.</string>
 </resources>

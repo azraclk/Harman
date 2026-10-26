@@ -18,6 +18,7 @@ class BudgetRepository(
 ) {
     val monthlyLimitMinor: Flow<Long> = settings.monthlyLimitMinor
     val onboardingDone: Flow<Boolean> = settings.onboardingDone
+    val themeMode: Flow<Int> = settings.themeMode
     val goals: Flow<List<SavingsGoal>> = goalDao.observeAll()
 
     fun month(month: YearMonth): Flow<MonthData> =
@@ -32,6 +33,14 @@ class BudgetRepository(
 
     suspend fun setMonthlyLimit(minor: Long) = settings.setMonthlyLimit(minor)
     suspend fun completeOnboarding() = settings.completeOnboarding()
+    suspend fun resetOnboarding() = settings.resetOnboarding()
+    suspend fun setThemeMode(mode: Int) = settings.setThemeMode(mode)
+
+    suspend fun clearAllData() {
+        transactionDao.clear()
+        goalDao.clear()
+        settings.clearAll()
+    }
 
     suspend fun saveGoal(id: Long = 0L, name: String, targetMinor: Long) {
         val existing = if (id > 0L) goalDao.getById(id) else null
