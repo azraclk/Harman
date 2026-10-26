@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
+import app.azracelik.harman.data.model.MonthLimit
 import app.azracelik.harman.data.model.SavingsGoal
 import app.azracelik.harman.data.model.Transaction
 import kotlinx.coroutines.flow.Flow
@@ -44,5 +45,18 @@ interface SavingsGoalDao {
     suspend fun delete(goal: SavingsGoal)
 
     @Query("DELETE FROM savings_goal")
+    suspend fun clear()
+}
+
+@Dao
+interface MonthLimitDao {
+    /** [monthIndex] veya öncesindeki en yakın limit kaydı; yoksa null. */
+    @Query("SELECT * FROM month_limits WHERE monthIndex <= :monthIndex ORDER BY monthIndex DESC LIMIT 1")
+    fun observeLatestUpTo(monthIndex: Int): Flow<MonthLimit?>
+
+    @Upsert
+    suspend fun upsert(limit: MonthLimit)
+
+    @Query("DELETE FROM month_limits")
     suspend fun clear()
 }

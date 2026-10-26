@@ -16,15 +16,14 @@ class SettingsStore(private val context: Context) {
     private val onboardingKey = booleanPreferencesKey("onboarding_done")
     private val themeKey = intPreferencesKey("theme_mode")
 
-    /** 0 = limit tanımlı değil. */
+    /**
+     * Ay bazlı limit tablosundan önceki genel limit. Artık yazılmaz; ilk ay kaydından
+     * önceki aylar için taban değerdir. 0 = limit yok.
+     */
     val monthlyLimitMinor: Flow<Long> = context.dataStore.data.map { it[limitKey] ?: 0L }
     val onboardingDone: Flow<Boolean> = context.dataStore.data.map { it[onboardingKey] ?: false }
     /** 0 = Sistem, 1 = Açık, 2 = Koyu */
     val themeMode: Flow<Int> = context.dataStore.data.map { it[themeKey] ?: 0 }
-
-    suspend fun setMonthlyLimit(minor: Long) {
-        context.dataStore.edit { it[limitKey] = minor.coerceAtLeast(0) }
-    }
 
     suspend fun completeOnboarding() {
         context.dataStore.edit { it[onboardingKey] = true }

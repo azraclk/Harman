@@ -73,7 +73,7 @@ fun HomeScreen(
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item { Header(viewModel.month.label(), onAddClick) }
+        item { Header(state.yearMonth.label(), onAddClick) }
         item {
             Spacer(Modifier.height(8.dp))
             HeroTile(summary, onSetLimit = onGoalsClick)

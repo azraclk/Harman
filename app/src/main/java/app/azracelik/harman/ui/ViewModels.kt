@@ -60,15 +60,19 @@ class AppViewModel(private val repo: BudgetRepository) : ViewModel() {
 
 data class HomeUiState(
     val loaded: Boolean = false,
+    val yearMonth: YearMonth = YearMonth.now(),
     val month: MonthData = MonthData(emptyList(), summarize(emptyList(), 0)),
     val goals: List<SavingsGoal> = emptyList()
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(repo: BudgetRepository) : ViewModel() {
-    val month: YearMonth = YearMonth.now()
-
+    /** Ay gece yarısı değişirse akış yeni ayla yeniden kurulur. */
     val state: StateFlow<HomeUiState> =
-        combine(repo.month(month), repo.goals) { data, goals -> HomeUiState(true, data, goals) }
+        repo.currentMonth
+            .flatMapLatest { month ->
+                combine(repo.month(month), repo.goals) { data, goals -> HomeUiState(true, month, data, goals) }
+            }
             .stateInUi(viewModelScope, HomeUiState())
 }
 

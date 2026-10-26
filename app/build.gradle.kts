@@ -36,6 +36,14 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        // Room şema dosyaları migration testlerinde kullanılır.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -56,6 +64,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    androidTestImplementation(libs.androidx.room.testing)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
